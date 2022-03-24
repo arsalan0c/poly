@@ -1,6 +1,8 @@
 package io_test
 
 import (
+	"testing"
+
 	"github.com/TimothyStiles/poly/io/fasta"
 	"github.com/TimothyStiles/poly/io/genbank"
 	"github.com/TimothyStiles/poly/io/gff"
@@ -9,7 +11,7 @@ import (
 
 // This is where the integration tests that make effed up cyclic dependencies go.
 
-func Example() {
+func TestExample(t *testing.T) {
 
 	// Poly can take in basic gff, gbk, fasta, and JSON.
 	// We call the json package "pson" (poly JSON) to prevent namespace collision with Go's standard json package.

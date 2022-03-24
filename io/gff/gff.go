@@ -13,6 +13,7 @@ package gff
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"sort"
 	"strconv"
@@ -111,36 +112,34 @@ func getFeatureSequence(feature Feature, location Location) (string, error) {
 
 // Parse Takes in a string representing a gffv3 file and parses it into an Sequence object.
 func Parse(file []byte) (Gff, error) {
-
 	gffString := string(file)
 	gff := Gff{}
-
 	// Add the CheckSum to sequence (blake3)
 	gff.Meta.CheckSum = blake3.Sum256(file)
 
-	lines := strings.Split(gffString, "\n")
-	metaString := lines[0:2]
-	versionString := metaString[0]
-	regionStringArray := strings.Split(metaString[1], " ")
-
-	// get name for general meta
 	meta := Meta{}
-	meta.Name = regionStringArray[1] // Formally region name, but changed to name here for generality/interoperability.
 
-	// get meta info only specific to GFF files
+	lines := strings.Split(gffString, "\n")
+	versionString := lines[0]
+
 	meta.Version = strings.Split(versionString, " ")[1]
-	meta.RegionStart, _ = strconv.Atoi(regionStringArray[2])
-	meta.RegionEnd, _ = strconv.Atoi(regionStringArray[3])
-	meta.Size = meta.RegionEnd - meta.RegionStart
 
 	var sequenceBuffer bytes.Buffer
 	fastaFlag := false
 	for _, line := range lines {
 		if line == "##FASTA" {
 			fastaFlag = true
+		} else if strings.HasPrefix(line, "##sequence-region") {
+			regionStringArray := strings.Split(line, " ")
+			meta.Name = regionStringArray[1] // Formally region name, but changed to name here for generality/interoperability.
+			meta.RegionStart, _ = strconv.Atoi(regionStringArray[2])
+			meta.RegionEnd, _ = strconv.Atoi(regionStringArray[3])
+			meta.Size = meta.RegionEnd - meta.RegionStart
 		} else if len(line) == 0 {
 			continue
 		} else if line[0:2] == "##" {
+			continue
+		} else if line[0:1] == "#" { // single hash sign signifies a human readable comment
 			continue
 		} else if fastaFlag && line[0:1] != ">" {
 			// sequence.Sequence = sequence.Sequence + line
@@ -149,6 +148,7 @@ func Parse(file []byte) (Gff, error) {
 			gff.Meta.Description = line
 		} else {
 			record := Feature{}
+			fmt.Println(line)
 			fields := strings.Split(line, "\t")
 			record.Name = fields[0]
 			record.Source = fields[1]
@@ -279,6 +279,7 @@ func Build(sequence Gff) ([]byte, error) {
 
 // Read takes in a filepath for a .gffv3 file and parses it into an Annotated poly.Sequence struct.
 func Read(path string) (Gff, error) {
+	fmt.Println("Going to print!")
 	file, _ := ioutil.ReadFile(path)
 	sequence, err := Parse(file)
 	if err != nil {

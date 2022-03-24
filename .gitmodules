@@ -1,0 +1,6 @@
+[submodule "frontend/gopherjs"]
+	path = frontend/gopherjs
+	url = https://github.com/gopherjs/gopherjs.git
+[submodule "frontend/gopherjs.github.io"]
+	path = frontend/gopherjs.github.io
+	url = https://github.com/arsalan0c/gopherjs.github.io.git
